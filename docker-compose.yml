@@ -1,26 +1,36 @@
 version: '3'
 services:
-  server:
+  rest:
     image: postgrest/postgrest
     ports:
       - 3000
     environment:
-      PGRST_DB_URI: postgres://app_user:password@db:5432/app_db
+      PGRST_DB_URI: postgres://rock:password@db:5432/rock
       PGRST_DB_SCHEMA: public
-      PGRST_DB_ANON_ROLE: app_user
+      PGRST_DB_ANON_ROLE: rock
       PGRST_SERVER_PROXY_URI: "http://127.0.0.1:3000"
     depends_on:
-      - db
-  db:
+      - rock
+  rock:
     image: postgres
     ports:
       - 5432
     environment:
-      POSTGRES_DB: app_db
-      POSTGRES_USER: app_user
+      POSTGRES_DB: rock
+      POSTGRES_USER: rock
       POSTGRES_PASSWORD: password
     volumes:
       - "./rock/initdb:/docker-entrypoint-initdb.d"
+  iron:
+    image: node:14-alpine
+    ports: ['3000:3000']
+    depends_on:
+      - rest
+    volumes:
+      - "./iron:/app"
+    working_dir: /app
+    command: yarn dev
+    
   # Uncomment this if you want to persist the data.
   # volumes:
   #   - "./pgdata:/var/lib/postgresql/data"
