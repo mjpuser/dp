@@ -15,8 +15,12 @@ import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
-import InboxIcon from "@material-ui/icons/MoveToInbox";
-import MailIcon from "@material-ui/icons/Mail";
+import Icon from "@material-ui/core/Icon";
+
+const menu = [
+  { name: "Datasets", icon: "storage" },
+  { name: "Pipelines", icon: "account_tree" },
+];
 
 const drawerWidth = 240;
 
@@ -133,13 +137,13 @@ function Layout({ children }) {
         </div>
         <Divider />
         <List>
-          {["Datasets", "Pipelines"].map((text, index) => (
-            <ListItem button key={text}>
+          {menu.map(({ name, icon }) => (
+            <ListItem button key={name}>
               <ListItemIcon>
-                {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+                <Icon>{icon}</Icon>
               </ListItemIcon>
-              <Link href={`/${text.toLowerCase()}`}>
-                <ListItemText primary={text} />
+              <Link href={`/${name.toLowerCase()}`}>
+                <ListItemText primary={name} />
               </Link>
             </ListItem>
           ))}
