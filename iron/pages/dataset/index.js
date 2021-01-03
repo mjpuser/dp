@@ -9,8 +9,8 @@ export default function About({ datasets }) {
     <>
       <Typography variant="h6">Datasets</Typography>
       <List>
-        {datasets.map((d) => (
-          <ListItem key={d.id}>
+        {datasets.map((d, i) => (
+          <ListItem key={d.id} divider={i < datasets.length - 1}>
             <ListItemText primary={d.name} />
           </ListItem>
         ))}

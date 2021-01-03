@@ -19,8 +19,8 @@ export default function Pipelines({ pipelines }) {
       </Grid>
       <Grid item xs={12}>
         <List>
-          {pipelines.map((p) => (
-            <ListItem key={p.id}>
+          {pipelines.map((p, i) => (
+            <ListItem key={p.id} divider={i < pipelines.length - 1}>
               <ListItemText primary={p.name} />
             </ListItem>
           ))}
