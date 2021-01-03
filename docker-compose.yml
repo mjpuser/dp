@@ -5,7 +5,7 @@ services:
     ports:
       - 3000
     environment:
-      PGRST_DB_URI: postgres://rock:password@db:5432/rock
+      PGRST_DB_URI: postgres://rock:password@rock:5432/rock
       PGRST_DB_SCHEMA: public
       PGRST_DB_ANON_ROLE: rock
       PGRST_SERVER_PROXY_URI: "http://127.0.0.1:3000"
