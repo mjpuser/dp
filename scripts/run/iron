@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+docker run \
+    --rm \
+    -w /var/box \
+    -v "${PWD}/iron:/var/box" \
+    -u $(id -u ${USER}):$(id -g ${USER}) \
+    node:14-alpine \
+    "$@"
