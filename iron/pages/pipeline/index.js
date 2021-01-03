@@ -13,7 +13,7 @@ export default function Pipelines({ pipelines }) {
         <Typography variant="h6">Pipelines</Typography>
       </Grid>
       <Grid item xs={12}>
-        <Button variant="contained" color="primary" endIcon={<Icon>add</Icon>}>
+        <Button variant="contained" color="primary" href="/pipeline/new" endIcon={<Icon>add</Icon>}>
           Add
         </Button>
       </Grid>
