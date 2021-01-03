@@ -2,11 +2,12 @@ import React from "react";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
+import { Typography } from "@material-ui/core";
 
 export default function About({ datasets }) {
   return (
     <>
-      Datasets
+      <Typography variant="h6">Datasets</Typography>
       <List>
         {datasets.map((d) => (
           <ListItem key={d.id}>
