@@ -18,8 +18,8 @@ import ListItemText from "@material-ui/core/ListItemText";
 import Icon from "@material-ui/core/Icon";
 
 const menu = [
-  { name: "Datasets", icon: "storage" },
-  { name: "Pipelines", icon: "account_tree" },
+  { name: "Datasets", link: '/dataset', icon: "storage" },
+  { name: "Pipelines", link: '/pipeline', icon: "account_tree" },
 ];
 
 const drawerWidth = 240;
@@ -137,12 +137,12 @@ function Layout({ children }) {
         </div>
         <Divider />
         <List>
-          {menu.map(({ name, icon }) => (
+          {menu.map(({ name, icon, link }) => (
             <ListItem button key={name}>
               <ListItemIcon>
                 <Icon>{icon}</Icon>
               </ListItemIcon>
-              <Link href={`/${name.toLowerCase()}`}>
+              <Link href={link}>
                 <ListItemText primary={name} />
               </Link>
             </ListItem>
