@@ -20,6 +20,7 @@ import Icon from "@material-ui/core/Icon";
 const menu = [
   { name: "Datasets", link: '/dataset', icon: "storage" },
   { name: "Pipelines", link: '/pipeline', icon: "account_tree" },
+  { name: "Knowledge Bases", link: '/knowledge-base', icon: "menu_book" },
 ];
 
 const drawerWidth = 240;
