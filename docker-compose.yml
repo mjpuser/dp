@@ -31,16 +31,17 @@ services:
     volumes:
       - "./rock/initdb:/docker-entrypoint-initdb.d"
   iron:
-    image: node:14-alpine
+    image: nikolaik/python-nodejs:python3.8-nodejs14-alpine
     ports:
       - 3000
     depends_on:
       - rest
     volumes:
       - "./iron:/app"
+      - "node_modules:/app/node_modules"
     working_dir: /app
-    command: yarn dev
+    command: sh -c 'yarn install --frozen-lockfile && yarn dev'
     
   # Uncomment this if you want to persist the data.
-  # volumes:
-  #   - "./pgdata:/var/lib/postgresql/data"
+volumes:
+  node_modules:
