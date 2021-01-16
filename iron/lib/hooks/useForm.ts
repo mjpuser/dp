@@ -1,6 +1,7 @@
 import useOnChange from "./useOnChange";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Dataset from "../types/resource/dataset";
+import useIncrement from "./useIncrement";
 
 type UseFormOptions<T> = {
   service:
@@ -11,10 +12,9 @@ type UseFormOptions<T> = {
 
 function useForm<T>({ initial, service }: UseFormOptions<T>) {
   const { data, onChange } = useOnChange<T>(initial);
-  const [id, setId] = useState(0);
-  const create = () => setId((prev) => prev + 1);
+  const { count, increment } = useIncrement();
   useEffect(() => {
-    if (id) {
+    if (count) {
       (async () => {
         const res = await fetch(`/rest/${service}`, {
           method: "POST",
@@ -25,8 +25,8 @@ function useForm<T>({ initial, service }: UseFormOptions<T>) {
         });
       })();
     }
-  }, [id]);
-  return { create, onChange };
+  }, [count]);
+  return { create: increment, onChange };
 }
 
 export default useForm;
