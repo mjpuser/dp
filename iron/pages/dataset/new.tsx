@@ -3,7 +3,7 @@ import useForm from "../../lib/hooks/useForm";
 import Dataset from '../../lib/types/resource/dataset';
 
 export default function NewDataset() {
-  const { create, onChange } = useForm<Dataset>({ service: "dataset", initial: {} });
+  const { create, onChange } = useForm<Dataset>({ service: 'dataset' });
   return (
     <form noValidate autoComplete="off">
       <FormControl fullWidth>
