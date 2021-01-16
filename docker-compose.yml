@@ -1,5 +1,14 @@
 version: '3'
 services:
+  hub:
+    image: nginx:alpine
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./conf/dev/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - rest
+      - iron
   rest:
     image: postgrest/postgrest
     ports:
@@ -23,7 +32,8 @@ services:
       - "./rock/initdb:/docker-entrypoint-initdb.d"
   iron:
     image: node:14-alpine
-    ports: ['3000:3000']
+    ports:
+      - 3000
     depends_on:
       - rest
     volumes:
