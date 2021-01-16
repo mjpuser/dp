@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
-function useOnChange(initial = {}) {
-  const [data, setValue] = useState(initial);
+function useOnChange<T>(initial: Partial<T>) {
+  const [data, setValue] = useState<Partial<T>>(initial);
 
-  const onChange = (name) => (e) =>
+  const onChange = (name: keyof T) => (e: any) =>
     setValue((prev) => ({ ...prev, [name]: e.target.value }));
 
   return { data, onChange };

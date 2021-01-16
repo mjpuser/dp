@@ -1,8 +1,16 @@
 import useOnChange from "./useOnChange";
 import { useState, useEffect } from "react";
+import Dataset from "../types/resource/dataset";
 
-function useForm({ service, initial }) {
-  const { data, onChange } = useOnChange(initial || {});
+type UseFormOptions<T> = {
+  service:
+    T extends Dataset ? 'dataset' :
+    'error',
+  initial?: Partial<T>
+}
+
+function useForm<T>({ initial, service }: UseFormOptions<T>) {
+  const { data, onChange } = useOnChange<T>(initial);
   const [id, setId] = useState(0);
   const create = () => setId((prev) => prev + 1);
   useEffect(() => {

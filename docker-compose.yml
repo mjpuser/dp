@@ -38,10 +38,5 @@ services:
       - rest
     volumes:
       - "./iron:/app"
-      - "node_modules:/app/node_modules"
     working_dir: /app
     command: sh -c 'yarn install --frozen-lockfile && yarn dev'
-    
-  # Uncomment this if you want to persist the data.
-volumes:
-  node_modules:
