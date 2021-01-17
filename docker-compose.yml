@@ -9,6 +9,8 @@ services:
     depends_on:
       - rest
       - iron
+      - s3
+      - rabbitmq
   rest:
     image: postgrest/postgrest
     ports:
@@ -40,3 +42,40 @@ services:
       - "./iron:/app"
     working_dir: /app
     command: sh -c 'yarn install --frozen-lockfile && yarn dev'
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - 15672
+    volumes:
+      - ./conf/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
+      - ./conf/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:15762"]
+      interval: 1s
+      timeout: 1s
+      retries: 30
+      start_period: 30
+  s3:
+    image: minio/minio
+    ports:
+      - 9000
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio678
+    command: server /data
+    depends_on:
+      - rabbitmq
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000"]
+      interval: 1s
+      timeout: 1s
+      retries: 30
+      start_period: 30s
+  s3-config:
+    image: minio/mc
+    volumes:
+      - ./conf/s3/init.sh:/init.sh
+    entrypoint: /init.sh
+    depends_on:
+      - s3
+      - rabbitmq
