@@ -54,7 +54,7 @@ services:
       interval: 1s
       timeout: 1s
       retries: 30
-      start_period: 30
+      start_period: 30s
   s3:
     image: minio/minio
     ports:
@@ -79,3 +79,13 @@ services:
     depends_on:
       - s3
       - rabbitmq
+  vertex:
+    build:
+      context: ./vertex
+    depends_on:
+      - rabbitmq
+      - rest
+    volumes:
+      - "./vertex:/app"
+    working_dir: /app
+    command: pipenv shell python main.py
