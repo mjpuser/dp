@@ -32,6 +32,7 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - "./rock/initdb:/docker-entrypoint-initdb.d"
+      - "rock-data:/var/lib/postgresql/data"
   iron:
     image: nikolaik/python-nodejs:python3.8-nodejs14-alpine
     ports:
@@ -88,4 +89,9 @@ services:
     volumes:
       - "./vertex:/app"
     working_dir: /app
-    command: pipenv shell python main.py
+    tty: true
+    command: sh -c 'pipenv shell python main.py'
+    restart: always
+
+volumes:
+  rock-data:
