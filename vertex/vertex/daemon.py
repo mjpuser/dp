@@ -37,13 +37,18 @@ async def run_consumer(queue_id, pipeline_id, routing_key_in, routing_key_out):
 async def load_vertices():
     response = await requests.get(f'{settings.REST_URL}/vertex')
     data = await response.json()
-    return data
+    if response.status < 400:
+        return data
+    else:
+        logging.warn('Error loading vertex config: %s', data['message'])
+        return []
 
 
 async def start():
     vertices = await load_vertices()
 
     for vertex in vertices:
+        logging.info(str(vertex))
         logging.info(f'Loading `{vertex["name"]}` vertex')
 
     consumers = [

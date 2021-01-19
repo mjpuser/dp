@@ -83,15 +83,19 @@ services:
   vertex:
     build:
       context: ./vertex
+    environment:
+      PIPENV_VENV_IN_PROJECT: enabled
     depends_on:
       - rabbitmq
       - rest
     volumes:
       - "./vertex:/app"
+      - "./conf/dev/vertex/start.sh:/start.sh"
     working_dir: /app
     tty: true
-    command: sh -c 'pipenv shell python main.py'
     restart: always
+    command: /start.sh
+
 
 volumes:
   rock-data:
