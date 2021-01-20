@@ -11,24 +11,28 @@ from vertex import settings
 RABBIT_URL = f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASS}@{settings.RABBITMQ_HOST}/"
 
 
-async def run_consumer(queue_id, pipeline_id, routing_key_in, routing_key_out):
+async def run_consumer(queue_id, pipeline_id, routing_key_in, routing_key_out,
+                       exchange_name_in='pipeline', exchange_name_out='pipeline'):
     connection = await aio_pika.connect_robust(RABBIT_URL)
 
     async with connection:
-        # Creating channel
+        # Create channel
         channel = await connection.channel()
 
-        exchange = await channel.declare_exchange('pipeline', 'topic')
+        # Declare exchange
+        exchange_in = exchange_out = await channel.declare_exchange(exchange_name_in, 'topic')
+        if exchange_name_in != exchange_name_out:
+            exchange_out = await channel.declare_exchange(exchange_name_out, 'topic')
 
-        # Declaring queue
+        # Declare queue
         queue = await channel.declare_queue(queue_id, auto_delete=True)
-        await queue.bind(exchange, routing_key_in)
+        await queue.bind(exchange_in, routing_key_in)
 
         async with queue.iterator() as queue_iter:
             async for message in queue_iter:
                 async with message.process():
                     logging.info(f'{pipeline_id}:{queue_id}:{routing_key_in}:{routing_key_out} `{message.body}`')
-                    await exchange.publish(
+                    await exchange_out.publish(
                         aio_pika.Message(body=message.body),
                         routing_key=routing_key_out,
                     )
@@ -48,7 +52,6 @@ async def start():
     vertices = await load_vertices()
 
     for vertex in vertices:
-        logging.info(str(vertex))
         logging.info(f'Loading `{vertex["name"]}` vertex')
 
     consumers = [
