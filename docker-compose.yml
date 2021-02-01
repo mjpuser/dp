@@ -32,7 +32,7 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - "./rock/initdb:/docker-entrypoint-initdb.d"
-      - "rock-data:/var/lib/postgresql/data"
+      # - "rock-data:/var/lib/postgresql/data"
   iron:
     image: nikolaik/python-nodejs:python3.8-nodejs14-alpine
     ports:

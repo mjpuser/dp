@@ -1,12 +1,14 @@
 import useOnChange from "./useOnChange";
 import { useEffect } from "react";
-import Dataset from "../types/resource/dataset";
+import Pipeline from "../types/resource/pipeline";
+import Vertex from "../types/resource/vertex";
 import useIncrement from "./useIncrement";
 import { Resource } from "../types/resource";
 
 type UseFormOptions<T extends Resource> = {
   service:
-    T extends Dataset ? 'dataset' :
+    T extends Vertex ? 'vertex' :
+    T extends Pipeline ? 'pipeline' :
     'error',
   initial?: Partial<T>
 }

@@ -1,4 +1,6 @@
 import asyncio
+import importlib
+import json
 import logging
 import sys
 
@@ -9,10 +11,11 @@ from vertex import settings
 
 
 RABBIT_URL = f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASS}@{settings.RABBITMQ_HOST}/"
+PIPELINE_EXCHANGE = 'pipeline'
 
 
-async def run_consumer(queue_id, pipeline_id, routing_key_in, routing_key_out,
-                       exchange_name_in='pipeline', exchange_name_out='pipeline'):
+async def run_consumer(vertex_id, pipeline_id, exchange_name_in, routing_key_in,
+                       func, func_config):
     connection = await aio_pika.connect_robust(RABBIT_URL)
 
     async with connection:
@@ -21,21 +24,28 @@ async def run_consumer(queue_id, pipeline_id, routing_key_in, routing_key_out,
 
         # Declare exchange
         exchange_in = exchange_out = await channel.declare_exchange(exchange_name_in, 'topic')
-        if exchange_name_in != exchange_name_out:
-            exchange_out = await channel.declare_exchange(exchange_name_out, 'topic')
+        if exchange_name_in != PIPELINE_EXCHANGE:
+            exchange_out = await channel.declare_exchange(PIPELINE_EXCHANGE, 'topic')
 
         # Declare queue
-        queue = await channel.declare_queue(queue_id, auto_delete=True)
+        queue = await channel.declare_queue(vertex_id, auto_delete=True)
         await queue.bind(exchange_in, routing_key_in)
 
         async with queue.iterator() as queue_iter:
             async for message in queue_iter:
                 async with message.process():
-                    logging.info(f'{pipeline_id}:{queue_id}:{routing_key_in}:{routing_key_out} `{message.body}`')
-                    await exchange_out.publish(
-                        aio_pika.Message(body=message.body),
-                        routing_key=routing_key_out,
-                    )
+                    logging.info(f'{vertex_id}:{pipeline_id}:{exchange_name_in}:{routing_key_in} `{message.body}`')
+                    func = func or log_func
+                    body = json.loads(message.body)
+                    try:
+                        async for out, routing_key in func(func_config, body):
+                            logging.info(f'{pipeline_id}:{vertex_id}:{routing_key_in}:{vertex_id} `{out}`')
+                            await exchange_out.publish(
+                                aio_pika.Message(body=out),
+                                routing_key=routing_key or vertex_id,
+                            )
+                    except Exception as e:
+                        logging.error(str(e))
 
 
 async def load_vertices():
@@ -48,6 +58,12 @@ async def load_vertices():
         return []
 
 
+def load_func(path):
+    mod = '.'.join(path.split('.')[:-1])
+    func = path.split('.')[-1]
+    return getattr(importlib.import_module(mod), func)
+
+
 async def start():
     vertices = await load_vertices()
 
@@ -58,6 +74,8 @@ async def start():
         run_consumer(
             vertex['id'],
             vertex['pipeline_id'],
+            vertex['exchange_in'],
             vertex['routing_key_in'],
-            vertex['routing_key_out']) for vertex in vertices]
+            load_func(vertex['func']),
+            json.dumps(vertex['func_config'])) for vertex in vertices]
     return await asyncio.gather(*consumers)        

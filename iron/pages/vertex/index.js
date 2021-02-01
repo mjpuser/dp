@@ -3,17 +3,17 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import { Button, Grid, Icon, Typography } from "@material-ui/core";
 
-export default function About({ datasets }) {
+export default function VertexList({ vertices }) {
   return (
     <Grid container>
       <Grid item xs={12}>
-        <Typography variant="h6">Datasets</Typography>
+        <Typography variant="h6">Vertices</Typography>
       </Grid>
       <Grid item xs={12}>
         <Button
           variant="contained"
           color="primary"
-          href="/dataset/new"
+          href="/vertex/new"
           endIcon={<Icon>add</Icon>}
         >
           Add
@@ -21,8 +21,8 @@ export default function About({ datasets }) {
       </Grid>
       <Grid item xs={12}>
         <List>
-          {datasets.map((d, i) => (
-            <ListItem key={d.id} divider={i < datasets.length - 1}>
+          {vertices.map((d, i) => (
+            <ListItem key={d.id} divider={i < vertices.length - 1}>
               <ListItemText primary={d.name} />
             </ListItem>
           ))}
@@ -33,12 +33,12 @@ export default function About({ datasets }) {
 }
 
 export async function getServerSideProps(context) {
-  const res = await fetch("http://rest:3000/dataset");
-  const datasets = await res.json();
+  const res = await fetch("http://rest:3000/vertex");
+  const vertices = await res.json();
 
   return {
     props: {
-      datasets,
+      vertices,
     },
   };
 }
