@@ -8,6 +8,7 @@ aio-pika = "*"
 aioboto3 = "*"
 python-decouple = "*"
 aiohttp-requests = "*"
+asyncpg = "*"
 
 [dev-packages]
 mypy = "*"
