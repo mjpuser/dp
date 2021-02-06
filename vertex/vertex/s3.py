@@ -5,6 +5,10 @@ import urllib
 from vertex import settings, service
 
 
+def get_dataset_name(key: str) -> str:
+    return key.split('/')[0]
+
+
 async def split(config, message):
     event_name = message.get('EventName', '')
     if not event_name.startswith('s3:ObjectCreated'):
@@ -43,7 +47,7 @@ async def split(config, message):
             if 'Records' in event:
                 data = event['Records']['Payload'].decode('utf-8').strip().split('\n')
                 for datum in data:
-                    yield datum.encode('utf-8'), '/'.join(key.split('/')[:-1])
+                    yield datum.encode('utf-8'), get_dataset_name(key)
             elif 'End' in event:
                 end_event_received = True
         if not end_event_received:
@@ -63,7 +67,7 @@ async def register_dataset(config, message):
         return
 
     key = urllib.parse.unquote(message['Records'][0]['s3']['object']['key'])
-    name = key.split('/')[0]
+    name = get_dataset_name(key)
     dataset = service.DB('dataset')
     status, message = await dataset.post(data={'name': name})
     if status < 400:
