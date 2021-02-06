@@ -1,10 +1,8 @@
 import logging
 
-import aioboto3
-import botocore.client
 import urllib
 
-from vertex import settings, services
+from vertex import settings, service
 
 
 async def split(config, message):
@@ -21,7 +19,7 @@ async def split(config, message):
         logging.info(f'Skip processing file {bucket}/{key} since content type is {content_type}.  File must be a CSV to process')
         return
 
-    async with services.s3() as s3:
+    async with service.s3() as s3:
         logging.info(f'S3 select on {bucket} {key}')
         res = await s3.select_object_content(
             Bucket=bucket,
@@ -65,6 +63,13 @@ async def register_dataset(config, message):
         return
 
     key = urllib.parse.unquote(message['Records'][0]['s3']['object']['key'])
-    dataset = services.DB('dataset')
-    await dataset.post(key)
+    name = key.split('/')[0]
+    dataset = service.DB('dataset')
+    status, message = await dataset.post(data={'name': name})
+    if status < 400:
+        logging.info(f'Dataset {name} added successfully')
+    elif status == 409:
+        logging.info(f'Dataset {name} already added')
+    else:
+        logging.error(f'Dataset {name} failed to add')
     yield None, None

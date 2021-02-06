@@ -1,9 +1,13 @@
 import functools
 import inspect
+import logging
 from typing import Any, Dict
 import urllib
 
+import aioboto3
+from aiohttp_requests import requests
 import asyncpg
+import botocore.client
 
 from vertex import settings
 
@@ -21,11 +25,11 @@ class DB:
     def __init__(self, model: str):
         self.model = model
 
-    async def request(self, method_name, path=None, params=None, data=None):
+    async def request(self, method_name, path='', params=None, data=None):
         method = getattr(requests, method_name)
-        url = f'{settings.REST_URL}/{self.model}/{path}'
-        res = await method(url, data=value)
-        if 'application/json' in res.headers['Content-Type']:
+        url = f'{settings.REST_URL}/{self.model}{path}'
+        res = await method(url, data=data)
+        if 'application/json' in res.headers.get('Content-Type', ''):
             data = await res.json()
         else:
             data = await res.text()

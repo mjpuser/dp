@@ -6,9 +6,8 @@ import sys
 import traceback
 
 import aio_pika
-from aiohttp_requests import requests
 
-from vertex import settings
+from vertex import service, settings
 
 
 RABBIT_URL = f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASS}@{settings.RABBITMQ_HOST}/"
@@ -44,27 +43,13 @@ async def process_message(message, exchange_out, vertex_id, func, func_config):
     body = json.loads(message.body)
     try:
         async for out, routing_key in func(func_config, body):
-            if out is not None:
-                await exchange_out.publish(
-                    aio_pika.Message(body=out),
-                    routing_key=routing_key or vertex_id,
-                )
-                logging.info('Published message')
-            else:
-                logging.info('Terminal message')
+            await exchange_out.publish(
+                aio_pika.Message(body=out or b''),
+                routing_key=routing_key or vertex_id,
+            )
     except Exception as e:
         logging.error('Error processing message')
         traceback.print_exception(type(e), e, e.__traceback__)
-
-
-async def load_vertices():
-    response = await requests.get(f'{settings.REST_URL}/vertex')
-    data = await response.json()
-    if response.status < 400:
-        return data
-    else:
-        logging.warn('Error loading vertex config: %s', data['message'])
-        return []
 
 
 def load_func(path):
@@ -74,7 +59,11 @@ def load_func(path):
 
 
 async def start():
-    vertices = await load_vertices()
+    status, vertices = await service.DB('vertex').get()
+
+    if status >= 400 or not vertices:
+        logging.info('No vertices to load')
+        return
 
     for vertex in vertices:
         logging.info(f'Loading `{vertex["name"]}` vertex')
@@ -86,5 +75,5 @@ async def start():
             vertex['exchange_in'],
             vertex['routing_key_in'],
             load_func(vertex['func']),
-            json.dumps(vertex['func_config'])) for vertex in vertices]
+            vertex['func_config']) for vertex in vertices]
     return await asyncio.gather(*consumers)        
