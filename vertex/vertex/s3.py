@@ -4,7 +4,7 @@ import aioboto3
 import botocore.client
 import urllib
 
-from vertex import settings
+from vertex import settings, services
 
 
 async def split(config, message):
@@ -21,13 +21,7 @@ async def split(config, message):
         logging.info(f'Skip processing file {bucket}/{key} since content type is {content_type}.  File must be a CSV to process')
         return
 
-    # read s3 message
-    s3_client = aioboto3.client("s3",
-                                endpoint_url=settings.S3_ENDPOINT,
-                                aws_access_key_id=settings.S3_ACCESS_KEY_ID,
-                                aws_secret_access_key=settings.S3_SECRET_ACCESS_KEY,
-                                config=botocore.client.Config(signature_version='s3v4'))
-    async with s3_client as s3:
+    async with services.s3() as s3:
         logging.info(f'S3 select on {bucket} {key}')
         res = await s3.select_object_content(
             Bucket=bucket,
@@ -57,3 +51,20 @@ async def split(config, message):
         if not end_event_received:
             raise Exception("End event not received, request incomplete.")
         event_stream.close()
+
+
+async def register_dataset(config, message):
+    event_name = message.get('EventName', '')
+    if not event_name.startswith('s3:ObjectCreated'):
+        logging.info(f'Skip processing event `{event_name}`.  Must be an s3:ObjectCreated* event')
+        return
+
+    bucket = message['Records'][0]['s3']['bucket']['name']
+    if bucket != config['bucket']:
+        logging.info(f'Skip since bucket is not {config["bucket"]}')
+        return
+
+    key = urllib.parse.unquote(message['Records'][0]['s3']['object']['key'])
+    dataset = services.DB('dataset')
+    await dataset.post(key)
+    yield None, None
