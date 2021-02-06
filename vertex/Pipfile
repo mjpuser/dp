@@ -13,6 +13,7 @@ asyncpg = "*"
 [dev-packages]
 mypy = "*"
 pytest = "*"
+pytest-asyncio = "*"
 
 [requires]
 python_version = "3.9"

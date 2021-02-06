@@ -3,6 +3,7 @@ import importlib
 import json
 import logging
 import sys
+import traceback
 
 import aio_pika
 from aiohttp_requests import requests
@@ -35,17 +36,20 @@ async def run_consumer(vertex_id, pipeline_id, exchange_name_in, routing_key_in,
             async for message in queue_iter:
                 async with message.process():
                     logging.info(f'{vertex_id}:{pipeline_id}:{exchange_name_in}:{routing_key_in} `{message.body}`')
-                    func = func or log_func
-                    body = json.loads(message.body)
-                    try:
-                        async for out, routing_key in func(func_config, body):
-                            logging.info(f'{pipeline_id}:{vertex_id}:{routing_key_in}:{vertex_id} `{out}`')
-                            await exchange_out.publish(
-                                aio_pika.Message(body=out),
-                                routing_key=routing_key or vertex_id,
-                            )
-                    except Exception as e:
-                        logging.error(str(e))
+                    await process_message(message, exchange_out, vertex_id, func, func_config)
+
+
+async def process_message(message, exchange_out, vertex_id, func, func_config):
+    func = func or log_func
+    body = json.loads(message.body)
+    try:
+        async for out, routing_key in func(func_config, body):
+            await exchange_out.publish(
+                aio_pika.Message(body=out),
+                routing_key=routing_key or vertex_id,
+            )
+    except Exception as e:
+        traceback.print_exception(type(e), e, e.__traceback__)
 
 
 async def load_vertices():
