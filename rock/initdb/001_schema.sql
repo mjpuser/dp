@@ -14,6 +14,10 @@ CREATE TABLE pipeline (
     name TEXT NOT NULL
 );
 
+CREATE TABLE dataset (
+    name TEXT NOT NULL PRIMARY KEY
+);
+
 CREATE TABLE vertex (
     id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
     pipeline_id UUID REFERENCES pipeline(id),
