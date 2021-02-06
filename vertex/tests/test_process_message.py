@@ -51,3 +51,18 @@ async def test_routing_key_fallback(monkeypatch, exchange):
     await process_message(msg, exchange, vertex_id, func, {})
 
     exchange.publish.assert_called_with(aio_pika.Message(body=output), routing_key=vertex_id)
+
+
+@pytest.mark.asyncio
+async def test_routing_key_format(monkeypatch, exchange):
+    routing_key = '{vertex_id}.test'
+    output = b'output'
+    async def func(config, body):
+        yield output, routing_key
+
+    msg = Mock(aio_pika.message.Message)
+    vertex_id = 'vertex_id'
+
+    await process_message(msg, exchange, vertex_id, func, {})
+
+    exchange.publish.assert_called_with(aio_pika.Message(body=output), routing_key=f'{vertex_id}.test')

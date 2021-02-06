@@ -47,7 +47,7 @@ async def split(config, message):
             if 'Records' in event:
                 data = event['Records']['Payload'].decode('utf-8').strip().split('\n')
                 for datum in data:
-                    yield datum.encode('utf-8'), get_dataset_name(key)
+                    yield datum.encode('utf-8'), f'{{vertex_id}}.{get_dataset_name(key)}'
             elif 'End' in event:
                 end_event_received = True
         if not end_event_received:

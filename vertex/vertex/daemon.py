@@ -45,7 +45,7 @@ async def process_message(message, exchange_out, vertex_id, func, func_config):
         async for out, routing_key in func(func_config, body):
             await exchange_out.publish(
                 aio_pika.Message(body=out or b''),
-                routing_key=routing_key or vertex_id,
+                routing_key=(routing_key or vertex_id).format(vertex_id=vertex_id),
             )
     except Exception as e:
         logging.error('Error processing message')
