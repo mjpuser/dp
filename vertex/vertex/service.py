@@ -1,12 +1,8 @@
 import functools
-import inspect
 import logging
-from typing import Any, Dict
-import urllib
 
 import aioboto3
 from aiohttp_requests import requests
-import asyncpg
 import botocore.client
 
 from vertex import settings

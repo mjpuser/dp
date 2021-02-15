@@ -1,8 +1,8 @@
+import json
 import logging
-
 import urllib
 
-from vertex import settings, service
+from vertex import service
 
 
 def get_dataset_name(key: str) -> str:
@@ -77,3 +77,16 @@ async def register_dataset(config, message):
     else:
         logging.error(f'Dataset {name} failed to add')
     yield None, None
+
+
+async def write(config, message):
+    async with service.s3() as s3:
+        try:
+            await s3.put_object(
+                Body=json.dumps(message).encode('utf-8'),
+                Bucket=config['bucket'],
+                Key=config['key'].format(message=message),
+            )
+        except Exception as e:
+            logging.warn(f'Fix me {e}')
+        yield None, None

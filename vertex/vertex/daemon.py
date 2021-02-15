@@ -2,7 +2,6 @@ import asyncio
 import importlib
 import json
 import logging
-import sys
 import traceback
 
 import aio_pika
@@ -69,7 +68,7 @@ async def start():
 
     consumers = [
         run_consumer(
-            vertex['id'],
+            '{vertex[id]}.{vertex[name]}'.format(vertex=vertex),
             vertex['pipeline_id'],
             vertex['exchange_in'],
             vertex['routing_key_in'],
