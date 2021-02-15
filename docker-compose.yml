@@ -50,12 +50,6 @@ services:
     volumes:
       - ./conf/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
       - ./conf/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:15762"]
-      interval: 1s
-      timeout: 1s
-      retries: 30
-      start_period: 30s
   s3:
     image: minio/minio
     ports:
@@ -66,12 +60,6 @@ services:
     command: server /data
     depends_on:
       - rabbitmq
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000"]
-      interval: 1s
-      timeout: 1s
-      retries: 30
-      start_period: 30s
   s3-config:
     image: minio/mc
     volumes:

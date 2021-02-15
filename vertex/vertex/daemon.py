@@ -39,7 +39,6 @@ async def run_consumer(vertex_id, pipeline_id, exchange_name_in, routing_key_in,
 
 
 async def process_message(message, exchange_out, vertex_id, func, func_config):
-    func = func or log_func
     body = json.loads(message.body)
     try:
         async for out, routing_key in func(func_config, body):

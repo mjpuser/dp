@@ -23,9 +23,15 @@ def exchange(*args, **kwargs):
     return Mock(aio_pika.exchange.Exchange)
 
 
+routing_keys = [
+    ('routing_key', 'routing_key',),
+    (None, 'vertex_id',),
+    ('{vertex_id}.test', 'vertex_id.test')
+]
+
 @pytest.mark.asyncio
-async def test_routing_key(monkeypatch, exchange):
-    routing_key = 'routing_key'
+@pytest.mark.parametrize("routing_key,expected_routing_key", routing_keys)
+async def test_routing_key(routing_key, expected_routing_key, exchange):
     output = b'output'
     async def func(config, body):
         yield output, routing_key
@@ -35,34 +41,4 @@ async def test_routing_key(monkeypatch, exchange):
 
     await process_message(msg, exchange, vertex_id, func, {})
 
-    exchange.publish.assert_called_with(aio_pika.Message(body=output), routing_key=routing_key)
-
-
-@pytest.mark.asyncio
-async def test_routing_key_fallback(monkeypatch, exchange):
-    routing_key = None
-    output = b'output'
-    async def func(config, body):
-        yield output, routing_key
-
-    msg = Mock(aio_pika.message.Message)
-    vertex_id = 'vertex_id'
-
-    await process_message(msg, exchange, vertex_id, func, {})
-
-    exchange.publish.assert_called_with(aio_pika.Message(body=output), routing_key=vertex_id)
-
-
-@pytest.mark.asyncio
-async def test_routing_key_format(monkeypatch, exchange):
-    routing_key = '{vertex_id}.test'
-    output = b'output'
-    async def func(config, body):
-        yield output, routing_key
-
-    msg = Mock(aio_pika.message.Message)
-    vertex_id = 'vertex_id'
-
-    await process_message(msg, exchange, vertex_id, func, {})
-
-    exchange.publish.assert_called_with(aio_pika.Message(body=output), routing_key=f'{vertex_id}.test')
+    exchange.publish.assert_called_with(aio_pika.Message(body=output), routing_key=expected_routing_key)
