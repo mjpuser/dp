@@ -1,6 +1,7 @@
 import json
 import logging
 import urllib
+import uuid
 
 from vertex import service
 
@@ -85,7 +86,7 @@ async def write(config, message):
             await s3.put_object(
                 Body=json.dumps(message).encode('utf-8'),
                 Bucket=config['bucket'],
-                Key=config['key'].format(message=message),
+                Key=config['key'].format(message={**{'id': str(uuid.uuid4())}, **message}),
             )
         except Exception as e:
             logging.warn(f'Fix me {e}')
