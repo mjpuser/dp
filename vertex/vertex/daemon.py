@@ -41,10 +41,11 @@ async def process_message(message, exchange_out, vertex_id, func, func_config):
     body = json.loads(message.body)
     try:
         async for out, routing_key in func(func_config, body):
-            await exchange_out.publish(
-                aio_pika.Message(body=out or b''),
-                routing_key=(routing_key or vertex_id).format(vertex_id=vertex_id),
-            )
+            if out is not None:
+                await exchange_out.publish(
+                    aio_pika.Message(body=out),
+                    routing_key=(routing_key or vertex_id).format(vertex_id=vertex_id),
+                )
     except Exception as e:
         logging.error('Error processing message')
         traceback.print_exception(type(e), e, e.__traceback__)
