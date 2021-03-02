@@ -22,10 +22,13 @@ CREATE TABLE vertex (
     id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
     pipeline_id UUID REFERENCES pipeline(id),
     name TEXT NOT NULL,
-    exchange_in TEXT NOT NULL REFERENCES exchange(name),
-    routing_key_in TEXT DEFAULT '#',
     func TEXT REFERENCES func(name),
     func_config JSON
+);
+
+CREATE TABLE vertex_connection (
+    receiver UUID REFERENCES vertex(id),
+    sender UUID REFERENCES vertex(id)
 );
 
 CREATE TABLE knowledge_base (

@@ -1,14 +1,24 @@
 INSERT INTO exchange (name) VALUES ('s3'), ('pipeline');
 
 INSERT INTO func (name, config) VALUES ('vertex.s3.split', '{}');
-INSERT INTO func (name, config) VALUES ('vertex.s3.register_dataset', '["bucket"]');
-INSERT INTO func (name, config) VALUES ('vertex.s3.write', '["bucket", "key"]');
+INSERT INTO func (name, config) VALUES ('vertex.s3.register_dataset', '{}');
+INSERT INTO func (name, config) VALUES ('vertex.s3.write', '["bucket"]');
 
-INSERT INTO pipeline (name) VALUES ('raw data splitter'),
-                                   ('dataset registrar'),
+INSERT INTO pipeline (name) VALUES ('dataset'),
                                    ('census');
 
-INSERT INTO vertex (pipeline_id, name, exchange_in, routing_key_in, func, func_config)
-VALUES ((SELECT id FROM pipeline WHERE name = 'raw data splitter'), 'split', 's3', '#', 'vertex.s3.split', '{}'),
-       ((SELECT id FROM pipeline WHERE name = 'dataset registrar'), 'register', 's3', '#', 'vertex.s3.register_dataset', '{"bucket": "raw"}'),
-       ((SELECT id FROM pipeline WHERE name = 'census'), 'census_writer', 'pipeline', '#.census', 'vertex.s3.write', '{"bucket": "data", "key": "{message[id]}"}');
+INSERT INTO vertex (pipeline_id, name, func, func_config)
+VALUES ((SELECT id FROM pipeline WHERE name = 'dataset'), 'register', 'vertex.s3.register_dataset', '{}'),
+       ((SELECT id FROM pipeline WHERE name = 'dataset'), 'split', 'vertex.s3.split', '{}'),
+       ((SELECT id FROM pipeline WHERE name = 'dataset'), 'write', 'vertex.s3.write', '{"bucket": "data"}');
+
+INSERT INTO vertex_connection (sender, receiver)
+VALUES
+    (
+     (SELECT id FROM vertex WHERE pipeline_id = (SELECT id FROM pipeline WHERE name = 'dataset') AND name = 'register'),
+     (SELECT id FROM vertex WHERE pipeline_id = (SELECT id FROM pipeline WHERE name = 'dataset') AND name = 'split')
+    ),
+    (
+     (SELECT id FROM vertex WHERE pipeline_id = (SELECT id FROM pipeline WHERE name = 'dataset') AND name = 'split'),
+     (SELECT id FROM vertex WHERE pipeline_id = (SELECT id FROM pipeline WHERE name = 'dataset') AND name = 'write')
+    );
