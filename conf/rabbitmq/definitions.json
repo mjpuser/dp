@@ -48,6 +48,13 @@
       "arguments": {
         "x-queue-type": "classic"
       }
+    },
+    {
+      "name": "vertex.s3.register_dataset",
+      "vhost": "/",
+      "durable": false,
+      "auto_delete": true,
+      "arguments": {}
     }
   ],
   "bindings": [
@@ -55,6 +62,14 @@
       "source": "error",
       "vhost": "/",
       "destination": "error",
+      "destination_type": "queue",
+      "routing_key": "#",
+      "arguments": {}
+    },
+    {
+      "source": "s3",
+      "vhost": "/",
+      "destination": "vertex.s3.register_dataset",
       "destination_type": "queue",
       "routing_key": "#",
       "arguments": {}
