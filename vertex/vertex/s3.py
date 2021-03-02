@@ -6,6 +6,7 @@ import uuid
 import aio_pika
 
 from vertex import service
+from vertex.vertex import get_receiver
 
 
 def get_dataset_name(key: str) -> str:
@@ -48,14 +49,25 @@ async def split(config, message):
         )
         event_stream = res['Payload']
         # Iterate over events in the event stream as they come
+        status, receivers = get_receiver(message.headers['sender_id'])
+        if status >= 400:
+            logging.error(f'Split failed {status}')
+            return
         async for event in event_stream:
             # If we received a records event, write the data to a file
             if 'Records' in event:
                 data = event['Records']['Payload'].decode(
                     'utf-8').strip().split('\n')
                 for datum in data:
-                    message = aio_pika.Message(body=datum.encode('utf-8'))
-                    yield datum.encode('utf-8'), f'{{name}}.{get_dataset_name(key)}'
+                    for receiver in receivers:
+                        headers = {
+                            'correlation_id': f"{message.headers['correlation_id']}_{str(uuid.uuid4())}",
+                            'sender_id': message.headers['receiver_id'],
+                            'pipeline_id': message.headers['pipeline_id'],
+                            'receiver_id': receiver['vertex']['id']
+                        }
+                        message = aio_pika.Message(body=datum.encode('utf-8'), headers=headers)
+                        yield message, receiver['vertex']['func']
             elif 'End' in event:
                 end_event_received = True
         if not end_event_received:
@@ -76,7 +88,7 @@ async def register_dataset(config, message):
     dataset_client = service.DB('dataset')
     status, _ = await dataset_client.post(data={'name': name})
     if status < 400:
-        logging.info(f'Dataset {name} added successfully')
+        pass
     elif status == 409:
         logging.info(f'Dataset {name} already added')
         return
@@ -94,6 +106,7 @@ async def register_dataset(config, message):
             'pipeline_id': pipeline['id'],
             'receiver_id': pipeline['vertex']['vertex_connection']['receiver']['id']})
         yield out, pipeline['vertex']['vertex_connection']['receiver']['func']
+        logging.info(f'Dataset {name} added successfully')
     else:
         logging.error('Unable to find dataset pipeline')
         return
