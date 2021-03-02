@@ -21,10 +21,10 @@ class DB:
     def __init__(self, model: str):
         self.model = model
 
-    async def request(self, method_name, path='', params=None, data=None):
+    async def request(self, method_name, path='', params=None, data=None, headers=None):
         method = getattr(requests, method_name)
         url = f'{settings.REST_URL}/{self.model}{path}'
-        res = await method(url, data=data)
+        res = await method(url, data=data, params=params, headers=headers)
         if 'application/json' in res.headers.get('Content-Type', ''):
             data = await res.json()
         else:
