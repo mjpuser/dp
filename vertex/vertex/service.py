@@ -25,7 +25,8 @@ class DB:
         method = getattr(requests, method_name)
         url = f'{settings.REST_URL}/{self.model}{path}'
         res = await method(url, data=data, params=params, headers=headers)
-        if 'application/json' in res.headers.get('Content-Type', ''):
+        ct = res.headers.get('Content-Type', '')
+        if 'application/json' in ct or 'application/vnd.pgrst.object+json' in ct:
             data = await res.json()
         else:
             data = await res.text()
