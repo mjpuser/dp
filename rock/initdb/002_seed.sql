@@ -10,7 +10,7 @@ INSERT INTO pipeline (name) VALUES ('dataset'),
 INSERT INTO vertex (pipeline_id, name, func, func_config)
 VALUES ((SELECT id FROM pipeline WHERE name = 'dataset'), 'register', 'vertex.s3.register_dataset', '{}'),
        ((SELECT id FROM pipeline WHERE name = 'dataset'), 'split', 'vertex.s3.split', '{}'),
-       ((SELECT id FROM pipeline WHERE name = 'dataset'), 'write', 'vertex.s3.write', '{"bucket": "data"}');
+       ((SELECT id FROM pipeline WHERE name = 'dataset'), 'write', 'vertex.s3.write', '{"bucket": "data", "key": "{path}/{message[id]}"}');
 
 INSERT INTO vertex_connection (sender, receiver)
 VALUES
