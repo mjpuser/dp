@@ -14,6 +14,7 @@ def get_dataset_name(key: str) -> str:
 
 
 async def split(config, message):
+    logging.info(f'{message.headers}')
     body = json.loads(message.body)
     event_name = body.get('EventName', '')
     if not event_name.startswith('s3:ObjectCreated'):
@@ -31,7 +32,6 @@ async def split(config, message):
         return
 
     async with service.s3() as s3:
-        logging.info(f'S3 select on {bucket} {key}')
         res = await s3.select_object_content(
             Bucket=bucket,
             Key=key,
@@ -49,7 +49,6 @@ async def split(config, message):
         )
         status, receivers = await get_receiver(message.headers['receiver_id'])
         if status >= 400:
-            logging.error(f'Split failed {status}')
             return
         event_stream = res['Payload']
         # Iterate over events in the event stream as they come
@@ -61,15 +60,16 @@ async def split(config, message):
                 for datum in data:
                     for receiver in receivers:
                         headers = {
+                            **message.headers,
                             'sender_id': message.headers['receiver_id'],
                             'pipeline_id': message.headers['pipeline_id'],
-                            'receiver_id': receiver['vertex']['id']
+                            'receiver_id': receiver['vertex']['id'],
                         }
                         out = aio_pika.Message(
-                            body=datum.encode('utf-8'), headers=headers, correlation_id=f"{message.info()['correlation_id']}_{str(uuid.uuid4())}")
+                            body=datum.encode('utf-8'),
+                            headers=headers,
+                            correlation_id=f"{message.info()['correlation_id']}_{str(uuid.uuid4())}")
                         yield out, receiver['vertex']['func']
-                        logging.info(
-                            f"Sending message to {receiver['vertex']['func']}")
             elif 'End' in event:
                 end_event_received = True
         if not end_event_received:
@@ -89,11 +89,8 @@ async def register_dataset(config, message):
     name = get_dataset_name(key)
     dataset_client = service.DB('dataset')
     status, _ = await dataset_client.post(data={'name': name})
-    if status < 400:
-        pass
-    elif status == 409:
+    if status < 400 or 409:
         logging.info(f'Dataset {name} already added')
-        return
     else:
         logging.error(f'Dataset {name} failed to add')
         return
@@ -105,10 +102,10 @@ async def register_dataset(config, message):
         out = aio_pika.Message(body=message.body, headers={
             'sender_id': pipeline['vertex'][0]['id'],
             'pipeline_id': pipeline['id'],
-            'receiver_id': pipeline['vertex'][0]['vertex_connection'][0]['receiver']['id']},
+            'receiver_id': pipeline['vertex'][0]['vertex_connection'][0]['receiver']['id'],
+            'dataset': name},
             correlation_id=str(uuid.uuid4()))
         yield out, pipeline['vertex'][0]['vertex_connection'][0]['receiver']['func']
-        logging.info(f'Dataset {name} added successfully')
     else:
         logging.error('Unable to find dataset pipeline')
         return
@@ -124,7 +121,7 @@ async def write(config, message):
             await s3.put_object(
                 Body=json.dumps(body).encode('utf-8'),
                 Bucket=vertex['func_config']['bucket'],
-                Key=vertex['func_config']['key'].format(message={**{'id': str(uuid.uuid4())}, **body}))
+                Key=vertex['func_config']['key'].format(message={**{'id': str(uuid.uuid4())}, **body}, headers=message.headers))
         except Exception as e:
-            logging.warn(f'Fix me {e}')
+            logging.warn(f's3 write - fix me {e}')
         yield None, None

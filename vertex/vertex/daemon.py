@@ -34,7 +34,7 @@ async def run_consumer(func, name):
 
 async def process_message(exchange, message, func, name):
     func_config = None
-    logging.info(message)
+    logging.info(message.info()['correlation_id'], name)
     try:
         async for out, routing_key in func(func_config, message):
             if out is not None:
