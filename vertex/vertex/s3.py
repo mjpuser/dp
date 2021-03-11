@@ -1,9 +1,11 @@
 import json
 import logging
+import traceback
 import urllib
 import uuid
 
 import aio_pika
+import aiohttp
 
 from vertex import service
 from vertex.vertex import get_receiver
@@ -60,7 +62,7 @@ async def split(config, message):
                 for datum in data:
                     for receiver in receivers:
                         headers = {
-                            **message.headers,
+                            'dataset': message.headers.get('dataset'),
                             'sender_id': message.headers['receiver_id'],
                             'pipeline_id': message.headers['pipeline_id'],
                             'receiver_id': receiver['vertex']['id'],
@@ -121,7 +123,10 @@ async def write(config, message):
             await s3.put_object(
                 Body=json.dumps(body).encode('utf-8'),
                 Bucket=vertex['func_config']['bucket'],
-                Key=vertex['func_config']['key'].format(message={**{'id': str(uuid.uuid4())}, **body}, headers=message.headers))
+                Key=vertex['func_config']['key'].format(message={**{'id': str(uuid.uuid4())}, **body}, path=message.headers.get('dataset')))
+        except aiohttp.client_exceptions.ClientConnectionError as e:
+            # dunno why this happens
+            pass
         except Exception as e:
-            logging.warn(f's3 write - fix me {e}')
+            logging.error(traceback.format_exception(None, e, e.__traceback__))
         yield None, None
