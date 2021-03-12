@@ -1,5 +1,7 @@
 import functools
 import logging
+import typing
+from typing import Optional, Tuple, Union
 
 import aioboto3
 from aiohttp_requests import requests
@@ -21,7 +23,7 @@ class DB:
     def __init__(self, model: str):
         self.model = model
 
-    async def request(self, method_name, path='', params=None, data=None, headers=None):
+    async def request(self, method_name: str, path: str = '', params: Optional[dict] = None, data: Optional[dict] = None, headers: Optional[dict] = None) -> Tuple[int, Optional[dict]]:
         method = getattr(requests, method_name)
         url = f'{settings.REST_URL}/{self.model}{path}'
         res = await method(url, data=data, params=params, headers=headers)
@@ -32,7 +34,7 @@ class DB:
             data = await res.text()
         if res.status >= 400:
             logging.warn(f'{res.status} {method_name.upper()} {url}')
-        return res.status, data
+        return typing.cast(int, res.status), data
 
     def __getattr__(self, name):
         return functools.partial(self.request, name)
