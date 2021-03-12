@@ -28,8 +28,6 @@ routing_keys = ['routing_key', None]
 @pytest.mark.asyncio
 @pytest.mark.parametrize("routing_key", routing_keys)
 async def test_routing_key(routing_key, exchange):
-    output = b'output'
-
     msg_in = Mock(aio_pika.message.Message)
     msg_in.info.return_value = {'correlation_id': 'test'}
     msg_out = Mock(aio_pika.message.Message)
@@ -50,7 +48,6 @@ messages = [Mock(aio_pika.message.Message), None]
 @pytest.mark.asyncio
 @pytest.mark.parametrize("msg", messages)
 async def test_msg(msg, exchange):
-    output = b'output'
     routing_key = 'test'
 
     msg_in = Mock(aio_pika.message.Message)
