@@ -1,7 +1,7 @@
 import functools
 import logging
 import typing
-from typing import Optional, Tuple, Union
+from typing import Any, Dict, Coroutine, Optional, Tuple, Union
 
 import aioboto3
 from aiohttp_requests import requests
@@ -23,7 +23,7 @@ class DB:
     def __init__(self, model: str):
         self.model = model
 
-    async def request(self, method_name: str, path: str = '', params: Optional[dict] = None, data: Optional[dict] = None, headers: Optional[dict] = None) -> Tuple[int, Optional[dict]]:
+    async def request(self, method_name: str, path: str = '', params: Optional[Dict] = None, data: Optional[Dict] = None, headers: Optional[Dict] = None) -> Tuple[int, Optional[Dict]]:
         method = getattr(requests, method_name)
         url = f'{settings.REST_URL}/{self.model}{path}'
         res = await method(url, data=data, params=params, headers=headers)
@@ -36,5 +36,5 @@ class DB:
             logging.warn(f'{res.status} {method_name.upper()} {url}')
         return typing.cast(int, res.status), data
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str):
         return functools.partial(self.request, name)
