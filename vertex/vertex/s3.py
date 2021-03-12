@@ -16,7 +16,6 @@ def get_dataset_name(key: str) -> str:
 
 
 async def split(config, message):
-    logging.info(f'{message.headers}')
     body = json.loads(message.body)
     event_name = body.get('EventName', '')
     if not event_name.startswith('s3:ObjectCreated'):

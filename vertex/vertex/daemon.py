@@ -34,14 +34,15 @@ async def run_consumer(func, name):
 
 async def process_message(exchange, message, func, name):
     func_config = None
-    logging.info(f"{message.info()['correlation_id']} {name}")
+    logging.info(f"{message.info()['correlation_id']} in {name}")
     try:
         async for out, routing_key in func(func_config, message):
-            if out is not None:
+            if out is not None and routing_key is not None:
                 await exchange.publish(
                     out,
-                    routing_key=(routing_key or name).format(name=name),
+                    routing_key=routing_key,
                 )
+                logging.info(f"{out.info()['correlation_id']} out {name}")
     except Exception as e:
         logging.error('Error processing message')
         traceback.print_exception(type(e), e, e.__traceback__)

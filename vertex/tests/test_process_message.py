@@ -23,22 +23,44 @@ def exchange(*args, **kwargs):
     return Mock(aio_pika.exchange.Exchange)
 
 
-routing_keys = [
-    ('routing_key', 'routing_key',),
-    (None, 'vertex_id',),
-    ('{vertex_id}.test', 'vertex_id.test')
-]
+routing_keys = ['routing_key', None]
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("routing_key,expected_routing_key", routing_keys)
-async def test_routing_key(routing_key, expected_routing_key, exchange):
+@pytest.mark.parametrize("routing_key", routing_keys)
+async def test_routing_key(routing_key, exchange):
     output = b'output'
+
+    msg_in = Mock(aio_pika.message.Message)
+    msg_in.info.return_value = {'correlation_id': 'test'}
+    msg_out = Mock(aio_pika.message.Message)
+
     async def func(config, body):
-        yield output, routing_key
+        yield msg_out, routing_key
 
-    msg = Mock(aio_pika.message.Message)
-    vertex_id = 'vertex_id'
+    await process_message(exchange, msg_in, func, 'func')
 
-    await process_message(msg, exchange, vertex_id, func, {})
+    if routing_key is not None:
+        exchange.publish.assert_called_with(msg_out, routing_key=routing_key)
+    if routing_key is None:
+        exchange.publish.assert_not_called()
 
-    exchange.publish.assert_called_with(aio_pika.Message(body=output), routing_key=expected_routing_key)
+
+messages = [Mock(aio_pika.message.Message), None]
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("msg", messages)
+async def test_msg(msg, exchange):
+    output = b'output'
+    routing_key = 'test'
+
+    msg_in = Mock(aio_pika.message.Message)
+    msg_in.info.return_value = {'correlation_id': 'test'}
+
+    async def func(config, body):
+        yield msg, routing_key
+    await process_message(exchange, msg_in, func, 'func')
+
+    if msg is not None:
+        exchange.publish.assert_called_with(msg, routing_key=routing_key)
+    if msg is None:
+        exchange.publish.assert_not_called()
