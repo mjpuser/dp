@@ -64,5 +64,6 @@ async def start():
     for func in funcs:
         logging.info(f'Loading `{func["name"]}` function')
 
-    consumers = [run_consumer(load_func(func['name']), func['name']) for func in funcs]
+    consumers = [run_consumer(load_func(func['name']), func['name'])
+                 for func in funcs]
     return await asyncio.gather(*consumers)

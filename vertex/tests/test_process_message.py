@@ -25,6 +25,7 @@ def exchange(*args, **kwargs):
 
 routing_keys = ['routing_key', None]
 
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("routing_key", routing_keys)
 async def test_routing_key(routing_key, exchange):
@@ -44,6 +45,7 @@ async def test_routing_key(routing_key, exchange):
 
 
 messages = [Mock(aio_pika.message.Message), None]
+
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("msg", messages)

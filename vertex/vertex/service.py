@@ -33,6 +33,6 @@ class DB:
         if res.status >= 400:
             logging.warn(f'{res.status} {method_name.upper()} {url}')
         return res.status, data
-    
+
     def __getattr__(self, name):
         return functools.partial(self.request, name)

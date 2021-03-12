@@ -15,4 +15,3 @@ done
 mc event add -p s3/raw arn:minio:sqs::1:amqp
 
 echo "Done configuring minio instance"
-
