@@ -1,6 +1,10 @@
 import base64
+import json
 from typing import Optional
 import uuid
+
+import aio_pika
+
 from vertex import service
 
 
@@ -19,3 +23,27 @@ def unwrap_correlation_id(correlation_id: bytes) -> Optional[bytes]:
     if len(correlation_id) == 16:
         return None
     return base64.b64decode(correlation_id)
+
+
+async def filter(config, message):
+    my_id = message.headers["receiver_id"]
+    status, vertex = await service.DB('vertex').get(params={'select': 'func_config',
+                                                            'id': f'eq.{my_id}'},
+                                                    headers={'accept': 'application/vnd.pgrst.object+json'})
+    status, receivers = await get_receiver(my_id)
+    fields = vertex['func_config']['fields']
+    body = json.loads(message.body)
+    filtered = {field: body.get(field) for field in fields}
+
+    for receiver in receivers:
+        headers = {
+            'dataset': message.headers.get('dataset'),
+            'sender_id': message.headers['receiver_id'],
+            'pipeline_id': message.headers['pipeline_id'],
+            'receiver_id': receiver['vertex']['id'],
+        }
+        out = aio_pika.Message(
+            body=json.dumps(filtered).encode('utf-8'),
+            headers=headers,
+            correlation_id=f"{message.info()['correlation_id']}")
+        yield out, receiver['vertex']['func']
