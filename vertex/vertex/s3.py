@@ -117,6 +117,7 @@ async def write(config, message):
                                                             'id': f'eq.{message.headers["receiver_id"]}'},
                                                     headers={'accept': 'application/vnd.pgrst.object+json'})
     body = json.loads(message.body)
+    status, receivers = await get_receiver(message.headers['receiver_id'])
     async with service.s3() as s3:
         try:
             await s3.put_object(
@@ -128,4 +129,15 @@ async def write(config, message):
             pass
         except Exception as e:
             logging.error(traceback.format_exception(None, e, e.__traceback__))
-        yield None, None
+        for receiver in receivers:
+            headers = {
+                'dataset': message.headers.get('dataset'),
+                'sender_id': message.headers['receiver_id'],
+                'pipeline_id': message.headers['pipeline_id'],
+                'receiver_id': receiver['vertex']['id'],
+            }
+            out = aio_pika.Message(
+                body=message.out,
+                headers=headers,
+                correlation_id=message.info()['correlation_id'])
+            yield out, receiver['vertex']['func']

@@ -1,5 +1,8 @@
 import base64
+import difflib
+import functools
 import json
+import logging
 from typing import Optional
 import uuid
 
@@ -25,6 +28,21 @@ def unwrap_correlation_id(correlation_id: bytes) -> Optional[bytes]:
     return base64.b64decode(correlation_id)
 
 
+def report_diff(f):
+    d = difflib.Differ()
+    @functools.wraps(f)
+    async def wrapper(config, msg_in):
+        async for msg_out, key_out in f(config, msg_in):
+            yield msg_out, key_out
+            a = json.dumps(json.loads(msg_in.body), indent=2).splitlines()
+            b = json.dumps(json.loads(msg_out.body), indent=2).splitlines()
+            patch = '\n'.join(list(d.compare(a, b)))
+            logging.info(patch)
+
+    return wrapper
+
+
+@report_diff
 async def filter(config, message):
     my_id = message.headers["receiver_id"]
     status, vertex = await service.DB('vertex').get(params={'select': 'func_config',

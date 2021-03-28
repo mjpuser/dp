@@ -10,6 +10,7 @@ from vertex import service, settings
 
 RABBIT_URL = f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASS}@{settings.RABBITMQ_HOST}/"
 PIPELINE_EXCHANGE = 'pipeline'
+META_EXCHANGE = 'meta'
 
 
 async def run_consumer(func, name):
@@ -22,6 +23,8 @@ async def run_consumer(func, name):
         # Declare exchange
         exchange = await channel.declare_exchange(PIPELINE_EXCHANGE, 'topic')
 
+        meta_exchange = await channel.declare_exchange(META_EXCHANGE, 'topic')
+
         # Declare queue
         queue = await channel.declare_queue(name, auto_delete=True)
         await queue.bind(exchange, f'{name}.#')
@@ -29,10 +32,10 @@ async def run_consumer(func, name):
         async with queue.iterator() as queue_iter:
             async for message in queue_iter:
                 async with message.process():
-                    await process_message(exchange, message, func, name)
+                    await process_message(meta_exchange, exchange, message, func, name)
 
 
-async def process_message(exchange, message, func, name):
+async def process_message(meta_exchange, exchange, message, func, name):
     func_config = None
     logging.info(f"in {message.info()['correlation_id']} - {name}")
     try:
