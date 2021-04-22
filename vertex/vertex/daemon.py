@@ -22,8 +22,7 @@ async def run_consumer(func, name):
 
         # Declare exchange
         exchange = await channel.declare_exchange(PIPELINE_EXCHANGE, 'topic')
-
-        meta_exchange = await channel.declare_exchange(META_EXCHANGE, 'topic')
+        meta_exchange = await channel.declare_exchange(META_EXCHANGE, 'topic', durable=True)
 
         # Declare queue
         queue = await channel.declare_queue(name, auto_delete=True)
@@ -39,7 +38,7 @@ async def process_message(meta_exchange, exchange, message, func, name):
     func_config = None
     logging.info(f"in {message.info()['correlation_id']} - {name}")
     try:
-        async for out, routing_key in func(func_config, message):
+        async for out, routing_key in func(func_config, message, **{'meta_exchange':meta_exchange}):
             if out is not None and routing_key is not None:
                 await exchange.publish(
                     out,

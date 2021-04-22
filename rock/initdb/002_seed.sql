@@ -2,7 +2,7 @@ INSERT INTO exchange (name) VALUES ('s3'), ('pipeline');
 
 INSERT INTO func (name, config) VALUES ('vertex.s3.split', '{}');
 INSERT INTO func (name, config) VALUES ('vertex.s3.register_dataset', '{}');
-INSERT INTO func (name, config) VALUES ('vertex.s3.write', '["bucket"]');
+INSERT INTO func (name, config) VALUES ('vertex.s3.write', '["bucket", "key"]');
 INSERT INTO func (name, config) VALUES ('vertex.vertex.filter', '["fields"]');
 
 INSERT INTO pipeline (name) VALUES ('dataset'),

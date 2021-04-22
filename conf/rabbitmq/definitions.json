@@ -37,6 +37,14 @@
       "durable": true,
       "auto_delete": false,
       "arguments": {}
+    },
+    {
+      "name": "meta",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
     }
   ],
   "queues": [
@@ -51,6 +59,13 @@
     },
     {
       "name": "vertex.s3.register_dataset",
+      "vhost": "/",
+      "durable": false,
+      "auto_delete": true,
+      "arguments": {}
+    },
+    {
+      "name": "dump",
       "vhost": "/",
       "durable": false,
       "auto_delete": true,
@@ -70,6 +85,14 @@
       "source": "s3",
       "vhost": "/",
       "destination": "vertex.s3.register_dataset",
+      "destination_type": "queue",
+      "routing_key": "#",
+      "arguments": {}
+    },
+    {
+      "source": "meta",
+      "vhost": "/",
+      "destination": "dump",
       "destination_type": "queue",
       "routing_key": "#",
       "arguments": {}

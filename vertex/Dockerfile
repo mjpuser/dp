@@ -1,5 +1,3 @@
 FROM python:3.9
 
 RUN pip install pipenv
-
-CMD /command.sh

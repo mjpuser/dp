@@ -15,7 +15,7 @@ def get_dataset_name(key: str) -> str:
     return key.split('/')[0]
 
 
-async def split(config, message):
+async def split(config, message, **kwargs):
     body = json.loads(message.body)
     event_name = body.get('EventName', '')
     if not event_name.startswith('s3:ObjectCreated'):
@@ -78,7 +78,7 @@ async def split(config, message):
         event_stream.close()
 
 
-async def register_dataset(config, message):
+async def register_dataset(config, message, **kwargs):
     body = json.loads(message.body)
     event_name = body.get('EventName', '')
     if not event_name.startswith('s3:ObjectCreated'):
@@ -112,7 +112,7 @@ async def register_dataset(config, message):
         return
 
 
-async def write(config, message):
+async def write(config, message, **kwargs):
     status, vertex = await service.DB('vertex').get(params={'select': 'func_config',
                                                             'id': f'eq.{message.headers["receiver_id"]}'},
                                                     headers={'accept': 'application/vnd.pgrst.object+json'})
